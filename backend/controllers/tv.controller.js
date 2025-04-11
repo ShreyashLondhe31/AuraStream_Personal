@@ -10,7 +10,7 @@ export async function getTrendingTv(req, res) {
 
     res.json({ success: true, content: randomMovie });
   } catch (error) {
-    console.log("Error in movie controller");
+    console.log("Error in tv controller");
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
@@ -66,7 +66,7 @@ export async function getSimilarTvs(req, res) {
       return res.status(404).send(null);
     }
 
-    console.log("Error in get similar movies controller");
+    console.log("Error in get similar tvs controller");
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
