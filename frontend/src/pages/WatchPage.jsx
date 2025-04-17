@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useContentStore } from "../store/content";
 import axios from "axios";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams} from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ReactPlayer from "react-player";
@@ -18,6 +18,7 @@ function formatReleaseDate(date) {
 }
 
 const WatchPage = () => {
+  
   const { id } = useParams();
   const [trailers, setTrailers] = useState([]);
   const [currentTrailerIdx, setCurrentTrailerIdx] = useState(0);
@@ -26,6 +27,7 @@ const WatchPage = () => {
   const [similarContent, setSimilarContent] = useState([]);
   const { contentType } = useContentStore();
   const sliderRef = useRef(null);
+ 
 
 
 
@@ -76,9 +78,6 @@ const WatchPage = () => {
     getContentDetails();
   }, [contentType, id]);
 
-  console.log("trailers: ", trailers);
-  console.log("similar:", similarContent);
-  console.log("Content:", content);
 
   const scrollLeft = () => {
     if(sliderRef.current)
@@ -205,6 +204,8 @@ const WatchPage = () => {
             className="max-h-[450px] rounded-md "
           />
         </div>
+
+        {/* simlar content */}
 
         {similarContent.length > 0 && (
           <div className="mt-12 max-w-5xl mx-auto relative no-scrollbar">

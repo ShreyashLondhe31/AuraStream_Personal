@@ -9,10 +9,12 @@ import MovieSlider from "../../components/MovieSlider";
 
 
 
+
 const HomeScreen = () => {
   const {trendingContent} = useGetTrendingContent()
   const {contentType} = useContentStore()
   const [imgLoading, setImgLoading] = useState(true)
+  
 
 
 

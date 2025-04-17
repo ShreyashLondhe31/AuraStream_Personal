@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuthStore } from "../store/authUser";
 
@@ -9,13 +9,15 @@ const SignUpPage = () => {
   const [password, setPassword] = useState("")
 
   const {login} = useAuthStore();
+  
 
-const handleSignUp = (e) => {
+const handleLogin = (e) => {
   e.preventDefault();
   console.log(email, password)
   login({email, password})
   setEmail("")
   setPassword("")
+  
 }
 
 
@@ -32,7 +34,7 @@ const handleSignUp = (e) => {
           <h1 className="text-center text-white text-2xl font-bold mb-4">
             Login
           </h1>
-          <form className="space-y-4" action="" onSubmit={handleSignUp}>
+          <form className="space-y-4" action="" onSubmit={handleLogin}>
             <div>
               <label
                 htmlFor="email"

@@ -4,6 +4,9 @@ import Navbar from "../components/Navbar";
 import { SMALL_IMG_BASE_URL } from "../utils/constants";
 import { Trash } from "lucide-react";
 import toast from "react-hot-toast";
+import { useAuthStore } from "../store/authUser";
+import { v4 as uuidv4 } from 'uuid'; // Import uuid
+
 
 function formatDate(dateString) {
 	// Create a Date object from the input date string
@@ -22,22 +25,28 @@ function formatDate(dateString) {
 
 const SearchHistoryPage = () => {
 	const [searchHistory, setSearchHistory] = useState([]);
+	const { selectedProfile } = useAuthStore()
 
 	useEffect(() => {
-		const getSearchHistory = async () => {
-			try {
-				const res = await axios.get(`/api/v1/search/history`);
-				setSearchHistory(res.data.content);
-			} catch (error) {
-				setSearchHistory([]);
-			}
-		};
-		getSearchHistory();
-	}, []);
+        const getSearchHistory = async () => {
+            try {
+                if (!selectedProfile) {
+                    // Handle the case where no profile is selected
+                    setSearchHistory([]);
+                    return;
+                }
+                const res = await axios.get(`/api/v1/search/history?profileId=${selectedProfile._id}`); // Send profileId as query parameter
+                setSearchHistory(res.data.content);
+            } catch (error) {
+                setSearchHistory([]);
+            }
+        };
+        getSearchHistory();
+    }, [selectedProfile]); // Add selectedProfile as a dependency
 
 	const handleDelete = async (entry) => {
 		try {
-			await axios.delete(`/api/v1/search/history/${entry.id}`);
+			await axios.delete(`/api/v1/search/history/${entry.id}?profileId=${selectedProfile._id}`);
 			setSearchHistory(searchHistory.filter((item) => item.id !== entry.id));
 		} catch (error) {
 			toast.error("Failed to delete search item");
@@ -66,7 +75,7 @@ const SearchHistoryPage = () => {
 				<h1 className='text-3xl font-bold mb-8'>Search History</h1>
 				<div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  gap-4'>
 					{searchHistory?.map((entry) => (
-						<div key={entry.id} className='bg-gray-800 p-4 rounded flex items-start'>
+						<div key={entry.uniqueKey || uuidv4()} className='bg-gray-800 p-4 rounded flex items-start'>
 							<img
 								src={SMALL_IMG_BASE_URL + entry.image}
 								alt='History image'

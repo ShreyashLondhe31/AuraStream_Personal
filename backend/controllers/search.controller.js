@@ -1,8 +1,16 @@
 import { User } from "../models/user.model.js";
 import { fetchFromTMDB } from "../services/tmbd.service.js";
+import mongoose from "mongoose";
 
 export async function searchPerson(req, res) {
   const { query } = req.params;
+  console.log("req.query", req.query);
+  const { profileId } = req.query; // Expect profileId in the request body
+  if (!profileId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "profileId is required" });
+  }
   try {
     const response = await fetchFromTMDB(
       `https://api.themoviedb.org/3/search/person?query=${query}&include_adult=false&language=en-US&page=1`
@@ -10,7 +18,6 @@ export async function searchPerson(req, res) {
 
     if (response.results.length === 0) {
       return res.status(404).send(null);
-      console.log("No results found for the query: ", query);
     }
 
     await User.findByIdAndUpdate(req.user._id, {
@@ -21,18 +28,27 @@ export async function searchPerson(req, res) {
           title: response.results[0].name,
           searchType: "person",
           createdAt: new Date(),
+          profileId: profileId, // Add profileId
         },
       },
     });
 
     res.status(200).json({ success: true, content: response.results });
   } catch (error) {
-    console.log("Error in searchPerson controller: ", error.message);
+    console.log("Error in searchPerson controller: ", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
+
 export async function searchMovie(req, res) {
+  console.log("req.query", req.query);
   const { query } = req.params;
+  const { profileId } = req.query; // 
+  if (!profileId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "profileId is required" });
+  }
 
   try {
     const response = await fetchFromTMDB(
@@ -51,17 +67,27 @@ export async function searchMovie(req, res) {
           title: response.results[0].title,
           searchType: "movie",
           createdAt: new Date(),
+          profileId: profileId
         },
       },
     });
     res.status(200).json({ success: true, content: response.results });
   } catch (error) {
-    console.log("Error in searchMovie controller: ", error.message);
+    console.error("Error in searchMovie controller:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
+
 export async function searchTv(req, res) {
   const { query } = req.params;
+  console.log("req.query", req.query);
+  const { profileId } = req.query; // Expect profileId in the request body
+  if (!profileId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "profileId is required" });
+  }
+
   try {
     const response = await fetchFromTMDB(
       `https://api.themoviedb.org/3/search/tv?query=${query}&include_adult=false&language=en-US&page=1`
@@ -79,39 +105,83 @@ export async function searchTv(req, res) {
           title: response.results[0].name,
           searchType: "tv",
           createdAt: new Date(),
+          profileId: profileId, // Add profileId
         },
       },
     });
 
     res.status(200).json({ success: true, content: response.results });
   } catch (error) {
-    console.log("Error in searchTv controller: ", error.message);
+    console.log("Error in searchTv controller: ", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
 
 export async function getSearchHistory(req, res) {
+  console.log("req.query:", req.query); // Log the query parameters
+  console.log("req.user._id", req.user._id);
+
+  const { profileId } = req.query;
+
+  if (!profileId) {
+      return res.status(400).json({ success: false, message: "profileId is required" });
+  }
+
   try {
-    res.status(200).json({ success: true, content: req.user.searchHistory });
+      const user = await User.findById(req.user._id);
+
+      if (!user) {
+          console.log("User not found");
+          return res.status(404).json({ message: "User not found" });
+      }
+
+      const profileSearchHistory = user.searchHistory.filter((item) => {
+          console.log("Item profileId", item.profileId.toString());
+          console.log("Query profileId", profileId);
+          return item.profileId.toString() === profileId;
+      });
+      console.log("profileSearchHistory", profileSearchHistory);
+
+      res.status(200).json({ success: true, content: profileSearchHistory });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+      console.error("Error in getSearchHistory:", error);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
 export async function removeItemFromSearchHistory(req, res) {
   let { id } = req.params;
-  id = parseInt(id)
-  
-  try {
-    await User.findByIdAndUpdate(req.user._id, {
-      $pull: {
-        searchHistory: { id:id },
-      },
-    });
-    res.status(200).json({ success: true, message: "Item removed from search history" });
-  } catch (error) {
-    console.log("Error in removeItemFromSearchHistory controller: ", error.message);
-    res.status(500).json({ success: false, message: "Internal server error" });
-    
+  console.log("req.query", req.query);
+  const { profileId } = req.query; // Expect profileId as query parameter
+  if (!profileId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "profileId is required" });
   }
+
+  try {
+    const userId = req.user._id;
+
+    const updateResult = await User.updateOne(
+        { _id: userId },
+        {
+            $pull: {
+                searchHistory: {
+                    id: parseInt(id), // If id is an integer, else remove parseInt
+                    profileId: new mongoose.Types.ObjectId(profileId) // If profileId is ObjectId
+                }
+            }
+        }
+    );
+
+    if (updateResult.modifiedCount > 0) {
+        res.status(200).json({ success: true, message: "Item removed from search history" });
+    } else {
+        res.status(404).json({ success: false, message: "Item not found in search history" });
+    }
+
+} catch (error) {
+    console.log("Error in removeItemFromSearchHistory controller: ", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+}
 }

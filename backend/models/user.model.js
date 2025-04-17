@@ -19,10 +19,39 @@ const userSchema = mongoose.Schema({
     type: String,
     default: "",
   },
-  searchHistory: {
-    type: Array,
-    default: [],
+  isAdmin: {
+    type: Boolean,
+    default: false,
   },
+  searchHistory: [
+    {
+        profileId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Profile",
+            required: true,
+        },
+        searchType: {
+            type: String,
+            required: true,
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+        id: {
+            type: Number,
+            required: true,
+        },
+        image: {
+            type: String,
+            required: true,
+        },
+        title: {
+            type: String,
+            required: true,
+        },
+    },
+],
 });
 
 export const User = mongoose.model("User", userSchema);

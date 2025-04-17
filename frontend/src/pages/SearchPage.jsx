@@ -6,6 +6,11 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { ORIGINAL_IMG_BASE_URL } from "../utils/constants";
 import { Link } from "react-router-dom";
+import { useAuthStore } from "../store/authUser";
+
+
+
+
 
 const SearchPage = () => {
 	const [activeTab, setActiveTab] = useState("movie");
@@ -13,6 +18,7 @@ const SearchPage = () => {
 
 	const [results, setResults] = useState([]);
 	const { setContentType } = useContentStore();
+	const {selectedProfile} = useAuthStore()
 
 	const handleTabClick = (tab) => {
 		setActiveTab(tab);
@@ -22,14 +28,21 @@ const SearchPage = () => {
 
 	const handleSearch = async (e) => {
 		e.preventDefault();
+	
+		if (!selectedProfile) {
+			toast.error('Please select a profile first.');
+			return; // Exit the function if no profile is selected
+		}
+	
 		try {
-			const res = await axios.get(`/api/v1/search/${activeTab}/${searchTerm}`);
+			const res = await axios.get(`/api/v1/search/${activeTab}/${searchTerm}?profileId=${selectedProfile._id}`);
+			console.log(res)
 			setResults(res.data.content);
 		} catch (error) {
-			if (error.response.status === 404) {
-				toast.error("Nothing found, make sure you are searching under the right category");
+			if (error.response && error.response.status === 404) {
+				toast.error('Nothing found, make sure you are searching under the right category');
 			} else {
-				toast.error("An error occurred, please try again later");
+				toast.error('An error occurred, please try again later');
 			}
 		}
 	};
@@ -61,7 +74,7 @@ const SearchPage = () => {
 						} hover:bg-red-700`}
 						onClick={() => handleTabClick("person")}
 					>
-						Person
+						Actors
 					</button>
 				</div>
 

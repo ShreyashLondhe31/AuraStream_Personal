@@ -2,12 +2,14 @@ import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
 import { generateTokenAndSetCookie } from "../utils/generateToken.js";
 
+
+
 export async function signup(req, res) {
   try {
     const { email, username, password } = req.body;
     if (!email || !username || !password) {
       return res
-        .status(400)
+        .status(400) 
         .json({ success: false, message: "All fields are required" });
     }
 
@@ -83,6 +85,7 @@ export async function login(req, res) {
         .json({ success: false, message: "Invalid credentials" });
     }
 
+
     const isPasswordCorrect = await bcryptjs.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res
@@ -106,6 +109,7 @@ export async function login(req, res) {
 export async function logout(req, res) {
   try {
     res.clearCookie("jwt-aurastream");
+    res.clearCookie("jwt-aurastream-profile")
     res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
     console.log("Error in logout controller", error.message);
