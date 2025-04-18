@@ -136,11 +136,9 @@ export async function getSearchHistory(req, res) {
       }
 
       const profileSearchHistory = user.searchHistory.filter((item) => {
-          console.log("Item profileId", item.profileId.toString());
-          console.log("Query profileId", profileId);
           return item.profileId.toString() === profileId;
       });
-      console.log("profileSearchHistory", profileSearchHistory);
+      
 
       res.status(200).json({ success: true, content: profileSearchHistory });
   } catch (error) {

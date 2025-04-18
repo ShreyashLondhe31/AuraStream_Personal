@@ -38,6 +38,7 @@ const SearchHistoryPage = () => {
                 const res = await axios.get(`/api/v1/search/history?profileId=${selectedProfile._id}`); // Send profileId as query parameter
                 setSearchHistory(res.data.content);
             } catch (error) {
+				console.log("Error in searchHistoryPage: ", error)
                 setSearchHistory([]);
             }
         };
@@ -49,6 +50,7 @@ const SearchHistoryPage = () => {
 			await axios.delete(`/api/v1/search/history/${entry.id}?profileId=${selectedProfile._id}`);
 			setSearchHistory(searchHistory.filter((item) => item.id !== entry.id));
 		} catch (error) {
+			console.log("Error in handleDeleteFunc: ", error)
 			toast.error("Failed to delete search item");
 		}
 	};
