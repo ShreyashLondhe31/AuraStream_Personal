@@ -1,18 +1,22 @@
+import { ENV_VARS } from "../config/envVars.js";
 import { Profile } from "../models/profile.model.js";
 import { generateTokenAndSetCookieOnProfileSelection } from "../utils/generateToken.js";
+import { v2 as cloudinary } from 'cloudinary'; // Use v2 import
 
 
 
 export async function createProfile(req, res) {
+  console.log("req.body:", req.body);
+  console.log("req.file:", req.file);
   try {
-    const { profileName, profileImage } = req.body;
-    const userId = req.user._id; // Get userId from protectedRoute middleware
+    const { profileName } = req.body;
+    const userId = req.user._id;
 
-    if(!profileName){
-      return res.status(400).json({success:false, message:"Invalid credentials"})
+    if (!profileName) {
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
     }
 
-    // Check if user has 5 profiles already
+    // **Move the profile count check to be the very first database interaction**
     const profileCount = await Profile.countDocuments({ userId });
     if (profileCount >= 5) {
       return res
@@ -20,25 +24,64 @@ export async function createProfile(req, res) {
         .json({ message: "User cannot have more than 5 profiles." });
     }
 
-   
-    const profile = new Profile({
-      userId,
-      profileName,
-      profileImage,
-    });
-    await profile.save()
-    generateTokenAndSetCookieOnProfileSelection(userId.toString(), profile._id.toString(), res); // corrected line
-    res.status(201).json({
-      success: true,
-      message: "Profile created successfully",
-      profile: {
-        ...profile._doc
-      },
-    });
-    
+    let profileImageUrl = null;
+    if (req.file && req.file.buffer) {
+      try {
+        // Configuration
+        cloudinary.config({
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+          api_key: process.env.CLOUDINARY_API_KEY,
+          api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+
+        const base64Image = req.file.buffer.toString('base64');
+        const dataUri = `data:${req.file.mimetype};base64,${base64Image}`;
+
+        const uploadResult = await cloudinary.uploader.upload(dataUri, {
+          folder: 'profile_images',
+        });
+
+        profileImageUrl = uploadResult.secure_url;
+        console.log("Cloudinary Upload Successful:", uploadResult);
+
+        const profile = new Profile({
+          userId,
+          profileName,
+          profileImage: profileImageUrl,
+        });
+        await profile.save();
+        generateTokenAndSetCookieOnProfileSelection(userId.toString(), profile._id.toString(), res);
+        return res.status(201).json({
+          success: true,
+          message: "Profile created successfully",
+          profile: {
+            ...profile._doc,
+          },
+        });
+
+      } catch (cloudinaryError) {
+        console.error("Cloudinary Upload Error:", cloudinaryError);
+        return res.status(500).json({ success: false, message: "Error uploading image to Cloudinary." });
+      }
+    } else {
+      const profile = new Profile({
+        userId,
+        profileName,
+        profileImage: profileImageUrl, // Will be null if no image
+      });
+      await profile.save();
+      generateTokenAndSetCookieOnProfileSelection(userId.toString(), profile._id.toString(), res);
+      return res.status(201).json({
+        success: true,
+        message: "Profile created successfully",
+        profile: {
+          ...profile._doc,
+        },
+      });
+    }
   } catch (error) {
     console.error("Error creating profile:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
 
@@ -66,40 +109,75 @@ export async function getUserProfiles(req, res) {
   }
 }
 
+export const getProfileById = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+
+    const profile = await Profile.findById(profileId);
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
+
+    // Authorization check (optional, but highly recommended)
+    // If you want to ensure only the user associated with the profile can access it:
+    if (req.user && req.user._id && profile.user && profile.user.toString()) {
+        if (req.user._id.toString() !== profile.user.toString()) {
+          return res.status(403).json({ success: false, message: "Unauthorized - You do not have permission to access this profile" });
+        }
+    } else {
+        console.warn("Missing user or profile information for authorization check.");
+        // Consider logging or handling this case appropriately.  You might still want to allow access if you can't verify.
+    }
+
+    res.status(200).json({ success: true, profile });
+  } catch (error) {
+    console.error("Error fetching profile by ID:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 export async function updateProfile(req, res) {
   try {
-    const { profileName, profileImage } = req.body;
+    const { profileName } = req.body;
     const profileId = req.params.profileId;
 
     // Find the profile to be updated
     const profile = await Profile.findById(profileId);
 
     if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: "Profile not found",
-      });
+      return res.status(404).json({ success: false, message: "Profile not found" });
     }
 
     // Check if the profile belongs to the authenticated user
     if (profile.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden - You can only update your own profiles",
-      });
+      return res.status(403).json({ success: false, message: "Forbidden - You can only update your own profiles" });
     }
 
-    // Update the profile
+    // Update the profile name
     profile.profileName = profileName || profile.profileName;
-    profile.profileImage = profileImage || profile.profileImage;
-    profile.updatedAt = Date.now();
 
+    // Handle image update if a new file was uploaded
+    if (req.file && req.file.buffer) {
+      try {
+        const base64Image = req.file.buffer.toString('base64');
+        const dataUri = `data:${req.file.mimetype};base64,${base64Image}`;
+
+        const uploadResult = await cloudinary.uploader.upload(dataUri, { folder: 'profile_images' });
+        profile.profileImage = uploadResult.secure_url;
+      } catch (cloudinaryError) {
+        console.error("Cloudinary Upload Error:", cloudinaryError);
+        return res.status(500).json({ success: false, message: "Error uploading image to Cloudinary." });
+      }
+    }
+
+    profile.updatedAt = Date.now();
     await profile.save();
 
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      profiles:profile,
+      profiles: profile,
     });
   } catch (error) {
     console.error("Error updating profile:", error);

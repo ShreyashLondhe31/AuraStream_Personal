@@ -8,13 +8,19 @@ import axios from 'axios'
     const{contentType} = useContentStore()
 
     useEffect(() => {
+        console.log("useGetTrendingContent - contentType:", contentType);
         const getTrendingContent = async () => {
-            const res = await axios.get(`/api/v1/${contentType}/trending`)
-            setTrendingContent(res.data.content)
-        }
-
-        getTrendingContent()
-    }, [contentType])
+          try {
+            const res = await axios.get(`/api/v1/${contentType}/trending`);
+            console.log("useGetTrendingContent - API Response:", res.data);
+            setTrendingContent(res.data.content);
+          } catch (error) {
+            console.error("useGetTrendingContent - Error fetching:", error);
+          }
+        };
+      
+        getTrendingContent();
+      }, [contentType]);
 
   return {
     trendingContent

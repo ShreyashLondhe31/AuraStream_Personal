@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
-import { generateTokenAndSetCookie } from "../utils/generateToken.js";
+import { generateTokenAndSetCookie, generateTokenAndSetCookieOnProfileSelection } from "../utils/generateToken.js";
+import { Profile } from "../models/profile.model.js";
+generateTokenAndSetCookieOnProfileSelection
 
 
 
@@ -93,14 +95,30 @@ export async function login(req, res) {
         .json({ success: false, message: "Invalid credentials" });
     }
 
-    generateTokenAndSetCookie(user._id, res);
-    res.status(200).json({
-      success: true,
-      user: {
-        ...user._doc,
-        password: "",
-      },
-    });
+    const defaultProfile = await Profile.findOne({ userId: user._id }); // Adjust query as needed
+
+    if (defaultProfile) {
+      generateTokenAndSetCookieOnProfileSelection(user._id, defaultProfile._id, res);
+      res.status(200).json({
+        success: true,
+        user: {
+          ...user._doc,
+          password: "",
+        },
+        profile: defaultProfile, // Optionally send profile info
+      });
+    } else {
+      // Handle the case where the user has no profiles (you might redirect them to create one)
+      generateTokenAndSetCookie(user._id, res); // Fallback: token without profileId
+      res.status(200).json({
+        success: true,
+        user: {
+          ...user._doc,
+          password: "",
+        },
+        message: "No profile found, please create one.",
+      });
+    }
   } catch (error) {
     console.log("Error in login controller", error.message);
     res.status(500).json({ success: false, message: "Internal server error" });

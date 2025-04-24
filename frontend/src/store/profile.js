@@ -22,23 +22,26 @@ export const useProfileStore = create((set, get) => ({
         }
     },
 
-    createProfile: async (profileData) => {
+    createProfile: async ({ profileName, profileImage }) => { // Receive profileImage here
         set({ loading: true, error: null });
-        console.log("Profile Data:", profileData);
+        console.log("Profile Data:", { profileName, profileImage });
         try {
-            const response = await axios.post('/api/v1/profile/', profileData, {
-                withCredentials: true,
-            });
-            set({ profiles: [...get().profiles, response.data.profile] });
-            toast.success(response.data.message)
+          const response = await axios.post(
+            '/api/v1/profile/',
+            { profileName, profileImage }, // Send profileImage to the backend
+            {
+              withCredentials: true,
+            }
+          );
+          set({ profiles: [...get().profiles, response.data.profile] });
+          toast.success(response.data.message);
         } catch (error) {
-            set({ error: error.message || 'Failed to create profile' });
-            throw error; // Rethrow the error to be handled in the component
-            
+          set({ error: error.message || 'Failed to create profile' });
+          throw error; // Rethrow the error to be handled in the component
         } finally {
-            set({ loading: false });
+          set({ loading: false });
         }
-    },
+      },
 
     updateProfile: async (profileId, profileData) => {
         set({ loading: true, error: null });

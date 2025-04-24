@@ -13,4 +13,3 @@ router.get("/authCheck", verifyJWT , authCheck);
 
 export default router;
 
-// nJlp4Qu12Mk3Rqnh

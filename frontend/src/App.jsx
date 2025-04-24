@@ -15,6 +15,9 @@ import CreateProfileForm from "./pages/Profile/CreateProfileForm";
 import ProfileList from "./pages/Profile/ProfileList";
 import ProfileProtectedRoute from "./components/ProfileProtectedRoute";
 import AuthScreen from "./pages/Home/AuthScreen";
+import EditProfilePage from "./pages/Profile/EditProfilePage";
+
+
 
 function App() {
   const { user, isCheckingAuth, authCheck, needsProfileSelection } =
@@ -46,6 +49,8 @@ function App() {
 				<Route path='/profiles' element={<ProfileList />} />
 				<Route path='/createprofile' element={<CreateProfileForm />} />
 				<Route path='/*' element={<NotFoundPage />} />
+        <Route path="/editprofile/:profileId" element={<EditProfilePage />} />
+       
 			</Routes>
       <Footer />
       <Toaster />
