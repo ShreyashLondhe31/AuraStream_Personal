@@ -15,7 +15,8 @@ const AuthScreen = () => {
     <div className='hero-bg relative'>
         {/* navbar */}
         <header className="max-w-6xl mx-auto flex items-center justify-between p-4 pb-10">
-            <img  alt="AuraStream Logo" className=' text-white w-32 md:w-52' />
+            {/* <img  alt="AuraStream Logo" className=' text-white w-32 md:w-52' /> */}
+            <h1 className="text-3xl font-bold text-white" >AuraStream</h1>
         <Link to={"/login"} className="text-white bg-green-600 py-1 px-2 rounded">
           sign in
         </Link>
@@ -68,43 +69,8 @@ const AuthScreen = () => {
       <div className='h-2 w-full bg-[#232323]' aria-hidden='true'/>
 
       {/* 2nd section */}
-      <div className='py-10 bg-black text-white'>
-        <div className='flex text-white max-w-6xl mx-auto justify-center items-center md:flex-row flex-col-reverse px-4 md:px-2'>
-            {/* left side */}
-            <div className='flex-1  '>
-                <div className='relative'>
-                    <img src="/stranger-things-lg.png" alt="Stranger-things-img" className='mt-4' />
-                    <div className='flex items-center gap-2 absolute bottom-5 left-1/2 -translate-x-1/2 bg-black w-3/4 lg:w-1/2 h-24 border border-slate-500 rounded-md px-2'>
-                <img src="/stranger-things-sm.png" alt="image" className='h-full'  />
-                <div className='flex justify-between items-center w-full '>
-                    <div className='flex flex-col gap-0'>
-                        <span className='text-md lg:text-lg font-bold'>Stranger Things</span>
-                        <span className='text-sm text-blue-500'>Downloading...</span>
-
-                    </div>
-
-                    <img src="/download-icon.gif" alt="" className='h-12' />
-                </div>
-                </div>
-                </div>
-                
-            </div>
-            {/* right side */}
-            <div className='flex-1 md:text-left text-center'>
-                <h2 className='text-4xl md:text-5xl font-extrabold mb-4 text-balance'>
-                    Download your shows to watch offline.
-                </h2>
-                <p className='text-lg md:text-xl'>
-                    Save your favorites easily and always have something to watch.
-                </p>
-            </div>
-
-        </div>
-
-      </div>
-
-      {/* separator */}
-      <div className='h-2 w-full bg-[#232323]' aria-hidden='true'/>
+      
+      
 
        {/* 3rd section  */}
      <div className='flex text-white max-w-6xl mx-auto justify-center items-center md:flex-row flex-col px-4 md:px-2'>
