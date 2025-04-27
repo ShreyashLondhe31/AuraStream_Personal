@@ -1,8 +1,8 @@
 import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
-import { generateTokenAndSetCookie, generateTokenAndSetCookieOnProfileSelection } from "../utils/generateToken.js";
+import { generateTokenAndSetCookie} from "../utils/generateToken.js";
 import { Profile } from "../models/profile.model.js";
-generateTokenAndSetCookieOnProfileSelection
+
 
 
 
@@ -11,7 +11,7 @@ export async function signup(req, res) {
     const { email, username, password } = req.body;
     if (!email || !username || !password) {
       return res
-        .status(400) 
+        .status(400)
         .json({ success: false, message: "All fields are required" });
     }
 
@@ -24,7 +24,7 @@ export async function signup(req, res) {
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: "Password must contain atleast 6 characters",
+        message: "Password must contain at least 6 characters",
       });
     }
 
@@ -58,8 +58,9 @@ export async function signup(req, res) {
       image,
     });
 
-    generateTokenAndSetCookie(newUser._id, res);
     await newUser.save();
+    //  Generate token and set cookie, pass the user ID as part of a payload object
+    generateTokenAndSetCookie({ userId: newUser._id.toString() }, res);
     res.status(201).json({
       success: true,
       user: {
@@ -87,7 +88,6 @@ export async function login(req, res) {
         .json({ success: false, message: "Invalid credentials" });
     }
 
-
     const isPasswordCorrect = await bcryptjs.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res
@@ -95,29 +95,28 @@ export async function login(req, res) {
         .json({ success: false, message: "Invalid credentials" });
     }
 
-    const defaultProfile = await Profile.findOne({ userId: user._id }); // Adjust query as needed
+    const defaultProfile = await Profile.findOne({ userId: user._id }); // Consider adding a specific 'isDefault' field to your Profile model for more reliable default profile selection
+
+    const userWithoutPassword = { ...user._doc, password: "" };
 
     if (defaultProfile) {
-      generateTokenAndSetCookieOnProfileSelection(user._id, defaultProfile._id, res);
+      const payload = { userId: user._id.toString(), profileId: defaultProfile._id.toString() };
+      generateTokenAndSetCookie(payload, res, "15d"); // Use consistent expiration
       res.status(200).json({
         success: true,
-        user: {
-          ...user._doc,
-          password: "",
-        },
+        user: userWithoutPassword,
         profile: defaultProfile, // Optionally send profile info
       });
     } else {
-      // Handle the case where the user has no profiles (you might redirect them to create one)
-      generateTokenAndSetCookie(user._id, res); // Fallback: token without profileId
+      const payload = { userId: user._id.toString() };
+      generateTokenAndSetCookie(payload, res, "15d"); // Use consistent expiration
       res.status(200).json({
         success: true,
-        user: {
-          ...user._doc,
-          password: "",
-        },
+        user: userWithoutPassword,
         message: "No profile found, please create one.",
       });
+      // Consider a different status code like 206 Partial Content
+      // res.status(206).json({ success: true, user: userWithoutPassword, message: "No profile found, please create one." });
     }
   } catch (error) {
     console.log("Error in login controller", error.message);
@@ -146,3 +145,26 @@ export async function authCheck(req, res) {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
+
+export const switchProfile = async (req, res) => {
+  try {
+    const { profileId } = req.body;
+    const userId = req.user._id;
+
+    // Verify that the requested profile belongs to the logged-in user
+    const profile = await Profile.findOne({ _id: profileId, userId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found for this user" });
+    }
+
+    // Generate a new JWT with the updated profileId and set the cookie
+    const payload = { userId: userId.toString(), profileId: profile._id.toString() };
+    generateTokenAndSetCookie(payload, res, "10d"); // Or your desired expiration
+
+    res.status(200).json({ success: true, message: "Profile switched successfully" });
+
+  } catch (error) {
+    console.error("Error switching profile:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

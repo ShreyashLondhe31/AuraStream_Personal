@@ -4,6 +4,8 @@ import { useAuthStore } from "../store/authUser";
 import { Search, LogOut, Menu } from "lucide-react";
 import { useContentStore } from "../store/content";
 import { useProfileStore } from "../store/profile";
+import axios from "axios";
+
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -22,10 +24,26 @@ const Navbar = () => {
     }
   }, [user, fetchProfiles]);
 
-  const handleProfileSelect = (profile) => {
+  const handleProfileSelect = async (profile) => {
     selectProfile(profile);
     setIsProfileListOpen(false); // Close the profile list
-    navigate("/");
+
+    if (user) {
+      try {
+        const response = await axios.post('/api/v1/auth/switchprofile', { profileId: profile._id });
+        if (response.status === 200) {
+          window.location.reload(); // Reload the page to use the new JWT
+        } else {
+          console.error("Failed to switch profile on backend");
+          // Optionally handle the error (e.g., show a notification)
+        }
+      } catch (error) {
+        console.error("Error switching profile:", error);
+        // Optionally handle the error (e.g., show a notification)
+      }
+    } else {
+      navigate("/login"); // Or handle the case where the user is not logged in
+    }
   };
 
   return (

@@ -1,7 +1,7 @@
 import { ENV_VARS } from "../config/envVars.js";
 import { Profile } from "../models/profile.model.js";
-import { generateTokenAndSetCookieOnProfileSelection } from "../utils/generateToken.js";
 import { v2 as cloudinary } from 'cloudinary'; // Use v2 import
+import { generateTokenAndSetCookie } from "../utils/generateToken.js";
 
 
 
@@ -16,7 +16,7 @@ export async function createProfile(req, res) {
       return res.status(400).json({ success: false, message: "Invalid credentials" });
     }
 
-    // **Move the profile count check to be the very first database interaction**
+    // Move the profile count check to be the very first database interaction
     const profileCount = await Profile.countDocuments({ userId });
     if (profileCount >= 5) {
       return res
@@ -44,41 +44,32 @@ export async function createProfile(req, res) {
         profileImageUrl = uploadResult.secure_url;
         console.log("Cloudinary Upload Successful:", uploadResult);
 
-        const profile = new Profile({
-          userId,
-          profileName,
-          profileImage: profileImageUrl,
-        });
-        await profile.save();
-        generateTokenAndSetCookieOnProfileSelection(userId.toString(), profile._id.toString(), res);
-        return res.status(201).json({
-          success: true,
-          message: "Profile created successfully",
-          profile: {
-            ...profile._doc,
-          },
-        });
 
       } catch (cloudinaryError) {
         console.error("Cloudinary Upload Error:", cloudinaryError);
         return res.status(500).json({ success: false, message: "Error uploading image to Cloudinary." });
       }
-    } else {
-      const profile = new Profile({
-        userId,
-        profileName,
-        profileImage: profileImageUrl, // Will be null if no image
-      });
-      await profile.save();
-      generateTokenAndSetCookieOnProfileSelection(userId.toString(), profile._id.toString(), res);
-      return res.status(201).json({
-        success: true,
-        message: "Profile created successfully",
-        profile: {
-          ...profile._doc,
-        },
-      });
     }
+
+    const profile = new Profile({
+      userId,
+      profileName,
+      profileImage: profileImageUrl, // Will be null if no image
+    });
+    await profile.save();
+
+    // Generate token and set cookie
+    const payload = { userId: userId.toString(), profileId: profile._id.toString() };
+    generateTokenAndSetCookie(payload, res); // Use the unified function
+
+    return res.status(201).json({
+      success: true,
+      message: "Profile created successfully",
+      profile: {
+        ...profile._doc,
+      },
+    });
+
   } catch (error) {
     console.error("Error creating profile:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });

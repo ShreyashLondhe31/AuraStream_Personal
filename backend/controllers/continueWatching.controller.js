@@ -1,6 +1,7 @@
 import { continueWatching } from "../models/continueWatching.model.js";
 
 export const addToContinueWatching = async (req, res) => {
+  console.log("Request Body:", req.body);
   try {
     const {
       mediaId,
@@ -53,6 +54,7 @@ export const addToContinueWatching = async (req, res) => {
 };
 
 export const getContinueWatching = async (req, res) => {
+  console.log("Request Query:", req.query);
   const { profileId } = req.query;
   const userId = req.user._id;
 

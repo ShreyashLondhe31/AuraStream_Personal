@@ -18,6 +18,7 @@ import axios from "axios";
 
 
 
+
 const HomeScreen = () => {
   const {
     continueWatching,
@@ -34,7 +35,7 @@ const HomeScreen = () => {
 
 
   const handlePlayTrailer = useCallback(
-    async (mediaId, mediaType, title, backdropPath, posterPath) => {
+    async (mediaId, mediaType, title, backdropPath, posterPath,) => {
       
       
       navigate(`/watch/${mediaId}`);
@@ -52,10 +53,12 @@ const HomeScreen = () => {
               backdropPath: backdropPath
               
             },
-            
             {
               headers: {
                 Authorization: `Bearer ${user.token}`,
+              },
+              params: {
+                profileId: selectedProfile._id,
               },
             }
           );

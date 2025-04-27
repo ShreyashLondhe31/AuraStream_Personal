@@ -49,7 +49,9 @@ const MovieSlider = ({
     }
   }, [contentType, category, propContent, isRecentlyViewed]);
 
-  const sliderTitle =  isContinueWatching ?   "Continue Watching" : ""
+  const sliderTitle = isContinueWatching
+  ? "Continue Watching"
+    : formattedCategoryType; 
      
 
   return (
