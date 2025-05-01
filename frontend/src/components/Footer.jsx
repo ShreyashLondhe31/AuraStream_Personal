@@ -5,15 +5,15 @@ const Footer = () => {
 				<p className='text-balance text-center text-sm leading-loose text-muted-foreground md:text-left'>
 					Built by{" "}
 					<a
-						href='https://github.com/ShreyashLondhe31/AuraStream_Personal'
+						href='https://github.com/ShreyashLondhe31/'
 						target='_blank'
 						className='font-medium underline underline-offset-4'
 					>
-						IMED MCA group no.9
+						Shreyash Subhash Londhe
 					</a>
 					. The source code is available on{" "}
 					<a
-						href='https://github.com/ShreyashLondhe31'
+						href='https://github.com/ShreyashLondhe31/AuraStream_Personal'
 						target='_blank'
 						rel='noreferrer'
 						className='font-medium underline underline-offset-4'

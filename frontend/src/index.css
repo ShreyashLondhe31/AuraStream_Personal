@@ -14,7 +14,7 @@
 
 
 .hero-bg{
-    background-image: linear-gradient(rgba(0,0,0,.8), rgba(0,0,0)), url('');
+    background-image: linear-gradient(rgba(0,0,0,.5), rgba(0,0,0)), url('/black-panther-bg.jpeg');
 }
 
 .shimmer{
